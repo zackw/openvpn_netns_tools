@@ -1,0 +1,6 @@
+[package]
+name = "openvpn_netns_tools"
+version = "0.1.0"
+authors = ["Zack Weinberg <zackw@panix.com>"]
+
+[dependencies]
