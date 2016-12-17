@@ -47,6 +47,68 @@
  * BSD/GNU extension set; and the currently Linux-specific signalfd.
  */
 
+use std::process;
+use std::env;
+use std::io;
+
+use std::io::Write;
+use std::path::Path;
+use std::ascii::AsciiExt;
+
+#[derive(Debug)]
+enum Error {
+    NotEnoughArgs,
+    TooManyArgs(usize),
+    ProgNameMissing,
+    InvalidNsPrefix(String),
+    InvalidNumber(String),
+    NotEnoughNamespaces,
+    TooManyNamespaces(u32),
+}
+use Error::*;
+
+fn run() -> Result<(), Error> {
+
+    // This will become shorter once "slice patterns" are stabilized.
+    let mut args = env::args();
+    let progname = try!(args.next().ok_or(NotEnoughArgs));
+    let prefix   = try!(args.next().ok_or(NotEnoughArgs));
+    let nnsp     = try!(args.next().ok_or(NotEnoughArgs));
+    if let Some(_) = args.next() {
+        return Err(TooManyArgs(args.count() + 3));
+    }
+
+    let progname = try!(Path::new(&progname).file_name()
+                        .and_then(|s| s.to_str())
+                        .ok_or(ProgNameMissing));
+
+    for c in prefix.chars() {
+        if !(c.is_ascii() && (c.is_alphanumeric() || c == '_')) {
+            return Err(InvalidNsPrefix(prefix.clone()))
+        }
+    }
+
+    let nnsp = try!(nnsp.parse::<u32>()
+                    .or_else(|_| Err(InvalidNumber(nnsp.clone()))));
+    if nnsp == 0 {
+        return Err(NotEnoughNamespaces);
+    } else if nnsp > 1024 {
+        return Err(TooManyNamespaces(nnsp));
+    }
+
+    println!("progname: {:?}", progname);
+    println!("prefix: {:?}", prefix);
+    println!("nnsp: {:?}", nnsp);
+
+    Ok(())
+}
+
 fn main() {
-    unimplemented!()
+    process::exit(match run() {
+        Ok(_) => 0,
+        Err(e) => {
+            writeln!(io::stderr(), "{:?}", e).unwrap();
+            1
+        }
+    });
 }
