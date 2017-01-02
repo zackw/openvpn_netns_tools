@@ -1,6 +1,10 @@
+# -*- mode: conf -*-
 [package]
-name = "openvpn_netns_tools"
+name    = "openvpn_netns_tools"
 version = "0.1.0"
 authors = ["Zack Weinberg <zackw@panix.com>"]
 
 [dependencies]
+libc      = "*"
+nix       = "^0.7.0"
+clap      = "~2.19.0"
